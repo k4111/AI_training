@@ -1,64 +1,71 @@
-graph = {
-    'A': ['B', 'C', 'D', 6],
-    'B': ['E', 'F', 3],
-    'C': ['G', 'H', 4],
-    'D': ['I', 'J', 5],
-    'E': [3],
-    'F': ['K', 'L', 'M', 1],
-    'G': [6],
-    'H': ['N', 'O', 2],
-    'I': [5],
-    'J': [4],
-    'K': [2],
-    'L': [0],
-    'M': [4],
-    'N': [0],
-    'O': [4]
-}
-
 class Node:
-    def __init__(self, id, par=None, h=0):
-        self.id = id
-        self.par = par
+    def __init__(self, ID, prev_node=None, h=0):
+        self.ID = ID
+        self.prev_node = prev_node
         self.h = h
 
-def get_path(node, distance):
-    print(node.id)
-    distance += node.h
-    if node.par == None:
-        print(distance)
+
+def get_path(node, path, weight):
+    path.insert(0, node.ID)
+    weight += node.h
+    if node.prev_node == None:
+        print(path)
+        print('cost: {0}'.format(weight))
         return
     else:
-        get_path(node.par, distance)
+        get_path(node.prev_node, path, weight)
 
-def get_distance(node):
-    return node.h
 
-def best_first_search(start_node, end_node, graph):
-    wait_to_check = []
+def duplicate(list, node):
+    for element in list:
+        if node.ID == element.ID and node.h == element.h:
+            return True
+    return False
+
+
+def best_first_search(input_graph, start, stop):
+    start_node = Node(ID=start, h=input_graph[start][-1])
+    stop_node = Node(ID=stop)
+    pending = []
     checked = []
-    wait_to_check.insert(0, start_node)
-    start_node.h = graph[start_node.id][-1]
-    while len(wait_to_check) != 0:
-        node = wait_to_check.pop(0)
-        checked.append(node)
-        if node.id == end_node.id:
-            print('search successfully')
-            distance = 0
-            get_path(node, distance)
+    pending.insert(0, start_node)
+    while len(pending) != 0:
+        current_node = pending.pop(0)
+        if current_node.ID == stop_node.ID:
+            path = []
+            weight = 0
+            print('search successful')
+            get_path(current_node, path, weight)
             return
-        i = 0
-        while i < len(graph[node.id]) - 1:
-            id = graph[node.id][i]
-            h = graph[id][-1]
-            tmp = Node(id=id, par=node, h=h)
-            if (tmp not in wait_to_check) and (tmp not in checked):
-                wait_to_check.insert(0, tmp)
-            i += 1
-        wait_to_check.sort(key=get_distance)
+        checked.insert(0, current_node)
+        neighbourhood = input_graph[current_node.ID]
+        for i in range(0, len(neighbourhood)-1):
+            neighbour_ID = neighbourhood[i]
+            neighbour_h = input_graph[neighbour_ID][-1]
+            neighbour = Node(ID=neighbour_ID, prev_node=current_node, h=neighbour_h)
+            if (not duplicate(pending, neighbour)) and (not duplicate(checked, neighbour)):
+                pending.insert(0, neighbour)
+        pending.sort(key=lambda node: node.h)
+        '''
+        print(list(map(lambda node: '{0} - {1}'.format(node.ID, node.h), pending)))
+        print(list(map(lambda node: '{0} - {1}'.format(node.ID, node.h), checked)))
+        print('---')
+        '''
     print('search failed')
     return
 
-best_first_search(Node(id='A'), Node(id='N'), graph)
 
+graph = {
+    'A': ['C', 'D', 'E', 20],
+    'B': ['F', 'I', 'G', 'H', 0],
+    'C': ['A', 'F', 15],
+    'D': ['A', 'F', 'I', 6],
+    'E': ['A', 'K', 'G', 7],
+    'F': ['B', 'C', 'D', 10],
+    'G': ['E', 'I', 'H', 'B', 5],
+    'H': ['B', 'G', 3],
+    'I': ['D', 'B', 'G', 8],
+    'K': ['E', 12],
+}
 
+best_first_search(graph, 'A', 'B')
